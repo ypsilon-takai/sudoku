@@ -1,13 +1,10 @@
 # sudoku
 
-A Clojure library designed to ... well, that part is up to you.
+Sudoku solver on clojure. Yes, not yet. It will be in the futere...
 
-## Usage
-
-FIXME
 
 ## License
 
-Copyright © 2013 FIXME
+Copyright 2013 Ypsilon.Takai
 
 Distributed under the Eclipse Public License, the same as Clojure.

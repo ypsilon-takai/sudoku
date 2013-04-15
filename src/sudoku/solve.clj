@@ -46,14 +46,14 @@
 (require '[clojure.set :as set])
  
 (defn candidates [pos board]
-  (->> ((juxt low-dat col-dat box-dat) pos board false)
+  (->> ((juxt low-dat col-dat box-dat) pos board true)
        (flatten ,,)
        (remove #(or (coll? %) (zero? %)) ,,)
        (set ,,)
        (set/difference (set (range 1 10)) ,,)))
  
 (defn boardify [raw-data]
-  (partition 9 raw-data))
+  (vec (map vec (partition 9 raw-data))))
  
 (defn solved? [board]
   (not-any? false?
@@ -90,17 +90,16 @@
  
 ;; apply rule
 ;;
- 
+(use '[clojure.pprint])
+
 (defn run-rule-1 [board]
   (let [next (step-rule-1 board)]
     (cond (solved? next) {:solved true :board next}
           (= board next) {:solved false :board next}
-          :t (do (print next)
+          :t (do (pprint next)
                  (recur next)))))
 
-;(pprint (step-rule-1 (step-rule-1 (step-rule-1 (step-rule-1
-;(step-rule-1 (step-rule-1 (step-rule-1 (step-rule-1 (step-rule-1
-;(step-rule-1 test-board)))))))))))
+
  
 ;; rule-2
 (defn step-rule-2 [board]
