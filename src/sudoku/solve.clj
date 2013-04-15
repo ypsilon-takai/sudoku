@@ -1,4 +1,6 @@
-(ns sudoku.solve)
+(ns sudoku.solve
+  (:use [clojure.pprint])
+  (:require [clojure.set :as set]))
 
 (def test-board
   [[0 0 3 0 2 0 6 0 0]
@@ -42,8 +44,6 @@
 (defn get-num [[x y] board]
    (nth (nth board y) x))
  
- 
-(require '[clojure.set :as set])
  
 (defn candidates [pos board]
   (->> ((juxt low-dat col-dat box-dat) pos board true)
@@ -90,8 +90,6 @@
  
 ;; apply rule
 ;;
-(use '[clojure.pprint])
-
 (defn run-rule-1 [board]
   (let [next (step-rule-1 board)]
     (cond (solved? next) {:solved true :board next}
