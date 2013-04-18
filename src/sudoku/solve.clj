@@ -1,16 +1,20 @@
-(ns sudoku.solve)
+(ns sudoku.solve
+  (:use [clojure.pprint])
+  (:require [clojure.set :as set]))
 
-(def test-board
-  [[0 0 3 0 2 0 6 0 0]
-   [9 0 0 3 0 5 0 0 1]
-   [0 0 1 8 0 6 4 0 0]
-   [0 0 8 1 0 2 9 0 0]
-   [7 0 0 0 0 0 0 0 8]
-   [0 0 6 7 0 8 2 0 0]
-   [0 0 2 6 0 9 5 0 0]
-   [8 0 0 2 0 3 0 0 9]
-   [0 0 5 0 1 0 3 0 0]])
- 
+
+;;
+(defn solved? [board]
+  (not-any? #(or (coll? %) (zero? %)) board))
+
+
+;; utils
+(defn get-num [board pos]
+  (get board pos))
+
+(defn set-num [board pos num]
+  (assoc board pos num))
+
 (defn low-dat
   ([pos board] (low-dat pos board true))
   ([[x y] board include-xy?]
@@ -38,32 +42,17 @@
                                                    (= iy y))))]
          (get-in board [iy ix])))))
  
- 
-(defn get-num [[x y] board]
-   (nth (nth board y) x))
- 
- 
-(require '[clojure.set :as set])
- 
+
+
+;; rule 1
+;;  if there is only one possible number, place it there.
 (defn candidates [pos board]
   (->> ((juxt low-dat col-dat box-dat) pos board true)
        (flatten ,,)
        (remove #(or (coll? %) (zero? %)) ,,)
        (set ,,)
        (set/difference (set (range 1 10)) ,,)))
- 
-(defn boardify [raw-data]
-  (vec (map vec (partition 9 raw-data))))
- 
-(defn solved? [board]
-  (not-any? false?
-            (map #(and (not-any? coll? %)
-                       (not-any? zero? %))
-                 board)))
- 
- 
-;; rule 1
-;; 
+
 (defn step-rule-1 [board]
   (boardify
    (for [y (range 9) x (range 9)]
@@ -76,22 +65,6 @@
              can))
          num)))))
  
-(defn step-rule-1 [board]
-  (boardify
-   (for [y (range 9) x (range 9)]
-     (let [num (get-num [x y] board)]
-       (if (or (set? num)
-               (zero? num))
-         (let [can (candidates [x y] board)]
-           (if (= (count can) 1)
-             (first can)
-             num))
-        num)))))
- 
-;; apply rule
-;;
-(use '[clojure.pprint])
-
 (defn run-rule-1 [board]
   (let [next (step-rule-1 board)]
     (cond (solved? next) {:solved true :board next}
@@ -101,7 +74,7 @@
 
 
  
-;; rule-2
+;; rule-2 
 (defn step-rule-2 [board]
   (for [y (range 9) x (range 9)]
     (let [dat (get-num [x y] board)]
