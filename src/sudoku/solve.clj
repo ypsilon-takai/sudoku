@@ -15,6 +15,7 @@
 (defn set-num [board pos num]
   (assoc board pos num))
 
+
 (defn low-dat
   ([pos board] (low-dat pos board true))
   ([[x y] board include-xy?]
@@ -46,6 +47,8 @@
 
 ;; rule 1
 ;;  if there is only one possible number, place it there.
+
+
 (defn candidates [pos board]
   (->> ((juxt low-dat col-dat box-dat) pos board true)
        (flatten ,,)
@@ -65,6 +68,8 @@
              can))
          num)))))
  
+
+;; apply rule
 (defn run-rule-1 [board]
   (let [next (step-rule-1 board)]
     (cond (solved? next) {:solved true :board next}
