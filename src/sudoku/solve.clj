@@ -9,64 +9,61 @@
 
 
 ;; utils
-(defn get-num [board pos]
+(defn get-val [board pos]
   (get board pos))
 
-(defn set-num [board pos num]
+(defn set-val [board pos num]
   (assoc board pos num))
 
-
-(defn low-dat
-  ([pos board] (low-dat pos board true))
-  ([[x y] board include-xy?]
-     (for [ix (range 9) :when (if include-xy?
+(defn row-pos-list 
+  ([pos] (row-pos-list pos true))
+  ([[x y] include-pos?]
+     (for [ix (range 9) :when (if include-pos?
                                 true
                                 (not= ix x))]
-       (get-in board [y ix]))))
- 
-(defn col-dat
-  ([pos board] (col-dat pos board true))
-  ([[x y] board include-xy?]
-     (for [iy (range 9) :when (if include-xy?
+       [ix y])))
+
+(defn col-pos-list
+  ([pos] (col-pos-list pos true))
+  ([[x y] include-pos?]
+     (for [iy (range 9) :when (if include-pos?
                                 true
                                 (not= iy y))]
-       (get-in board [iy x]))))
+       [x iy])))
  
-(defn box-dat
-  ([pos board] (box-dat pos board true))
-  ([[x y] board include-xy?]
+(defn box-pos-list
+  ([pos] (box-pos-list pos true))
+  ([[x y] include-pos?]
      (let [x-list (map #(+ (* 3 (quot x 3)) %) (range 3))
            y-list (map #(+ (* 3 (quot y 3)) %) (range 3))]
-       (for [iy y-list ix x-list :when (if include-xy?
+       (for [iy y-list ix x-list :when (if include-pos?
                                          true
                                          (not (and (= ix x)
                                                    (= iy y))))]
-         (get-in board [iy ix])))))
- 
-
+         [ix iy]))))
 
 ;; rule 1
 ;;  if there is only one possible number, place it there.
 
-
 (defn candidates [pos board]
-  (->> ((juxt low-dat col-dat box-dat) pos board true)
-       (flatten ,,)
+  (->> ((juxt row-pos-list col-pos-list box-pos-list) pos true)
+       (apply concat ,,)
+       (distinct ,,)
+       (map #(get-val board %) ,,)
        (remove #(or (coll? %) (zero? %)) ,,)
        (set ,,)
        (set/difference (set (range 1 10)) ,,)))
 
 (defn step-rule-1 [board]
-  (boardify
-   (for [y (range 9) x (range 9)]
-     (let [num (get-num [x y] board)]
+  (for [y (range 9) x (range 9)]
+     (let [num (get-val board [x y])]
        (if (or (set? num)
                (zero? num))
          (let [can (candidates [x y] board)]
            (if (= (count can) 1)
              (first can)
              can))
-         num)))))
+         num))))
  
 
 ;; apply rule
