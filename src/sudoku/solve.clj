@@ -13,9 +13,11 @@
 (defn get-val [board pos]
   (get board pos))
 
-(defn set-val [board pos num]
-  (assoc board pos num))
+(defn set-val [board pos value]
+  (assoc board pos value))
 
+(defn take-away [board pos num]
+  (set-val board pos (disj (get-val board pos) num)))
 
 ;; positions
 (defn row-pos-list
@@ -50,7 +52,7 @@
 
 (defn neibour-pos-list [pos]
   "Get same low, same col, same box posisions."
-  (->> ((juxt row-pos-list col-pos-list box-pos-list) pos true)
+  (->> ((juxt row-pos-list col-pos-list box-pos-list) pos false)
        (apply concat ,,)
        (distinct ,,)))
 
@@ -88,12 +90,18 @@
 
 ;; rule 1
 ;;  if there is only one possible number, place it there.
+(defn rule-1 [board pos]
+  (let [val-at-pos (firrst (get-val board pos))
+        neibour-pos (neibour-pos-list pos )]
+    (->> (set-val board pos val-at-pos)
+         (reduce (fn [board pos val-delete]
+                   )))))
+
 (defn apply-rule-1 [board]
-  (let [rule-1 (fn [pos] (let [val (get-val board pos)]
-                          (if (= (count val) 1)
-                            (first val)
-                            val)))]
-    (reduce #(set-val %1 %2 (rule-1 %2)) board (non-fixed-pos board))))
+  (loop [board board
+         new-fixed-pos (->> (non-fixed-pos board)
+                            (filter #(= (count (get-val board %)) 1) ,,))]
+))
 
 
 ;; apply rule
