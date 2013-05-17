@@ -89,19 +89,23 @@
 
 
 ;; rule 1
-;;  if there is only one possible number, place it there.
-(defn rule-1 [board pos]
-  (let [val-at-pos (firrst (get-val board pos))
-        neibour-pos (neibour-pos-list pos )]
-    (->> (set-val board pos val-at-pos)
-         (reduce (fn [board pos val-delete]
-                   )))))
+;;  if there is only one possible number, place it.
+(defn fix-the-number [board pos]
+  (let [val-at-pos (first (get-val board pos))
+        neibours (neibour-pos-list pos )]
+    (reduce (fn [b p]
+              (if (set? (get-val b p))
+                (set-val b p (disj (get-val b p) val-at-pos))
+                b))
+            (set-val board pos val-at-pos)
+            neibours)))
 
 (defn apply-rule-1 [board]
-  (loop [board board
-         new-fixed-pos (->> (non-fixed-pos board)
-                            (filter #(= (count (get-val board %)) 1) ,,))]
-))
+  (let [fixing-pos (->> (non-fixed-pos board)
+                        (filter #(= (count (get-val board %)) 1) ,,))]
+    (if (empty? fixing-pos)
+      board
+      (recur (reduce fix-the-number board fixing-pos)))))
 
 
 ;; apply rule
