@@ -89,13 +89,15 @@
 
 
 ;; rule 1
-;;  if there is only one possible number, place it.
-(defn fix-the-number [board pos]
+(defn fix-the-number
+  "rule 1
+     if there is only one possible number, place it."
+  [board pos]
   (let [val-at-pos (first (get-val board pos))
         neibours (neibour-pos-list pos )]
     (reduce (fn [b p]
               (if (set? (get-val b p))
-                (set-val b p (disj (get-val b p) val-at-pos))
+                (take-away b p val-at-pos)
                 b))
             (set-val board pos val-at-pos)
             neibours)))
@@ -108,19 +110,27 @@
       (recur (reduce fix-the-number board fixing-pos)))))
 
 
-;; apply rule
-(defn run-rule-1 [board]
-  (let [next (step-rule-1 board)]
-    (cond (solved? next) {:solved true :board next}
-          (= board next) {:solved false :board next}
-          :t (do (pprint next)
-                 (recur next)))))
+;; rule 2
+(defn find-only-one
+  "rule 2
+     if there is only one cell which number n is in candidates, the
+     cell's number is it."
+  [board pos]
+  (let [row-vals (map #(get-val board %) (row-pos-list pos false))
+        col-vals (map #(get-val board %) (col-pos-list pos false))
+        box-vals (map #(get-val board %) (box-pos-list pos false))]
+    ))
 
-
- 
-;; rule-2 
-(defn step-rule-2 [board]
-  (for [y (range 9) x (range 9)]
-    (let [dat (get-num [x y] board)]
-      (if (set? num)
-        (let )))))
+(defn find-only-one
+    "rule 2
+     if there is only one cell which number n is in candidates, the
+     cell's number is it."
+    [board pos neibour-func]
+    (let [not-in-neigbour (->> (neibour-func pos false)
+                               (map #(get-val board %) ,,)
+                               (filter set? ,,)
+                               (reduce clojure.set/union ,,)
+                               (clojure.set/difference (get-val board pos) ,,))]
+      (if (empty? not-in-neigbour)
+        board
+        (reduce #(take-away %1 %2 (first not-in-neigbour)) board (neibour-func pos false)))))
