@@ -50,7 +50,7 @@
                                                    (= iy y))))]
          [ix iy]))))
 
-(defn neibour-pos-list [pos]
+(defn neibor-pos-list [pos]
   "Get same low, same col, same box posisions."
   (->> ((juxt row-pos-list col-pos-list box-pos-list) pos false)
        (apply concat ,,)
@@ -72,7 +72,7 @@
 
 ;; create candidate list
 (defn candidates [pos board]
-  (->> (neibour-pos-list pos)
+  (->> (neibor-pos-list pos)
        (map #(get-val board %) ,,)
        (remove #(or (coll? %) (zero? %)) ,,)
        (set ,,)
@@ -87,50 +87,61 @@
                       num)))]
     (reduce #(set-val %1 %2 (updater %2)) board (non-fixed-pos board))))
 
+;; remove num from candidate
+(defn remove-num [board num pos-list]
+  (reduce (fn [b p] (if (set? (get-val b p))
+                     (take-away b p num)
+                     b))
+          board
+          pos-list))
 
+;;
 ;; rule 1
-(defn fix-the-number
+(defn fix-the-number [board pos]
+  (let [val-at-pos (first (get-val board pos))]
+    (remove-num (set-val board pos val-at-pos)
+                val-at-pos
+                (neibor-pos-list pos ))))
+
+(defn apply-rule-1 
   "rule 1
      if there is only one possible number, place it."
-  [board pos]
-  (let [val-at-pos (first (get-val board pos))
-        neibours (neibour-pos-list pos )]
-    (reduce (fn [b p]
-              (if (set? (get-val b p))
-                (take-away b p val-at-pos)
-                b))
-            (set-val board pos val-at-pos)
-            neibours)))
-
-(defn apply-rule-1 [board]
+  [board]
   (let [fixing-pos (->> (non-fixed-pos board)
                         (filter #(= (count (get-val board %)) 1) ,,))]
     (if (empty? fixing-pos)
       board
       (recur (reduce fix-the-number board fixing-pos)))))
 
-
+;;
 ;; rule 2
-(defn find-only-one
-  "rule 2
-     if there is only one cell which number n is in candidates, the
-     cell's number is it."
-  [board pos]
-  (let [row-vals (map #(get-val board %) (row-pos-list pos false))
-        col-vals (map #(get-val board %) (col-pos-list pos false))
-        box-vals (map #(get-val board %) (box-pos-list pos false))]
-    ))
 
-(defn find-only-one
-    "rule 2
-     if there is only one cell which number n is in candidates, the
-     cell's number is it."
-    [board pos neibour-func]
-    (let [not-in-neigbour (->> (neibour-func pos false)
-                               (map #(get-val board %) ,,)
-                               (filter set? ,,)
-                               (reduce clojure.set/union ,,)
-                               (clojure.set/difference (get-val board pos) ,,))]
-      (if (empty? not-in-neigbour)
-        board
-        (reduce #(take-away %1 %2 (first not-in-neigbour)) board (neibour-func pos false)))))
+(defn not-in-neigbor [board pos neigbor-func]
+  (->> (neigbor-func pos false)
+       (map #(get-val board %) ,,)
+       (filter set? ,,)
+       (reduce clojure.set/union ,,)
+       (clojure.set/difference (get-val board pos) ,,)
+       (#(if (empty? %) false (first %)) ,,)))
+
+(defn check-only-one [board pos]
+  (loop [pos-fn-list [row-pos-list col-pos-list box-pos-list]]
+    (if (empty? pos-fn-list)
+      board
+      (if-let [only-one-val (not-in-neigbor board pos (first pos-fn-list))]
+        (remove-num (set-val board pos only-one-val)
+                    only-one-val
+                    (neibour-pos-list pos))
+        (recur (next pos-fn-list))))))
+
+(defn apply-rule-2
+  "rule 2
+   if there is only one cell which number n is in candidates, the
+   cell's number is it."
+  [board]
+  (let [target-pos (non-fixed-pos board)
+        next-board (reduce check-only-one board target-pos)]
+    (cond (empty? target-pos) board
+          (= board next-board) board
+          :t (recur next-board))))
+
