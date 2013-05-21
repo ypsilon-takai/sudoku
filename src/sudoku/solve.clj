@@ -1,13 +1,21 @@
-(ns sudoku.solve
+ (ns sudoku.solve
   (:use [clojure.pprint]
         [sudoku.util])
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set]
+            [clojure.math.combinatorics :as combo]))
 
 
 ;;
 (defn solved? [board]
-  (not-any? #(or (coll? %) (zero? %)) (vals board)))
+  (not-any? coll? (vals board)))
 
+(defn status [board]
+  (let [still-as-candidate (filter set? (vals board))]
+    (if (empty? still-as-candidate)
+      :solved
+      (if (some empty? still-as-candidate)
+        :fail
+        :notyet))))
 
 ;; utils
 (defn get-val [board pos]
@@ -51,7 +59,7 @@
          [ix iy]))))
 
 (defn neibor-pos-list [pos]
-  "Get same low, same col, same box posisions."
+  "Get same low, same col and same box posisions."
   (->> ((juxt row-pos-list col-pos-list box-pos-list) pos false)
        (apply concat ,,)
        (distinct ,,)))
@@ -74,15 +82,14 @@
 (defn candidates [pos board]
   (->> (neibor-pos-list pos)
        (map #(get-val board %) ,,)
-       (remove #(or (coll? %) (zero? %)) ,,)
+       (remove coll? ,,)
        (set ,,)
        (set/difference (set (range 1 10)) ,,)))
 
 (defn update-candidate [board]
   (let [updater (fn [pos]
                   (let [num (get-val board pos)]
-                    (if (or (set? num)
-                            (zero? num))
+                    (if (set? num) 
                       (candidates pos board)
                       num)))]
     (reduce #(set-val %1 %2 (updater %2)) board (non-fixed-pos board))))
@@ -97,7 +104,12 @@
 
 ;;
 ;; rule 1
-(defn fix-the-number [board pos]
+(defn fix-the-number
+  "receives posision whose candidates includes only one number.
+   set the number as value of the posision and remove the number
+   from related cells"
+  [board pos]
+  
   (let [val-at-pos (first (get-val board pos))]
     (remove-num (set-val board pos val-at-pos)
                 val-at-pos
@@ -116,7 +128,10 @@
 ;;
 ;; rule 2
 
-(defn not-in-neigbor [board pos neigbor-func]
+(defn not-in-neigbor 
+  "return the number which is not in neigbors.
+   return false if not found. "
+  [board pos neigbor-func]
   (->> (neigbor-func pos false)
        (map #(get-val board %) ,,)
        (filter set? ,,)
@@ -124,24 +139,49 @@
        (clojure.set/difference (get-val board pos) ,,)
        (#(if (empty? %) false (first %)) ,,)))
 
-(defn check-only-one [board pos]
+(defn check-only-one
+  "Check every candidates of the posision if it is only one in the neibor."
+  [board pos]
   (loop [pos-fn-list [row-pos-list col-pos-list box-pos-list]]
     (if (empty? pos-fn-list)
       board
       (if-let [only-one-val (not-in-neigbor board pos (first pos-fn-list))]
         (remove-num (set-val board pos only-one-val)
                     only-one-val
-                    (neibour-pos-list pos))
+                    (neibor-pos-list pos))
         (recur (next pos-fn-list))))))
 
 (defn apply-rule-2
   "rule 2
-   if there is only one cell which number n is in candidates, the
-   cell's number is it."
+   if there is only one cell which specific number is in its candidates, 
+   the cell's number is it."
   [board]
   (let [target-pos (non-fixed-pos board)
         next-board (reduce check-only-one board target-pos)]
     (cond (empty? target-pos) board
           (= board next-board) board
           :t (recur next-board))))
+
+;;
+;; rule 3
+;; if there is two cells whose candidates has just two number and same
+;; eachother, neigbor cells can't have those number.
+
+(defn find-same 
+  ([board pos neigbor-func] (find-same board pos neigbor-func 2))
+  ([board pos neigbor-func cnt]
+     (let [ps (->> (neigbor-func pos)
+                   (non-fixed-pos board ,,)
+                   (filter #(= cnt (count (get-val board %))) ,,))]
+       (loop [pairs (combo/combinations ps cnt)]
+         (if (empty? pairs)
+           nil
+           (if (= (get-val board (first (first pairs)))
+                  (get-val board (second (first pairs))))
+             (first pairs)
+             (recur (next pairs))))))))
+
+
+
+
 
