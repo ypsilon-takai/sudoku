@@ -1,4 +1,4 @@
- (ns sudoku.solve
+(ns sudoku.solve
   (:use [clojure.pprint]
         [sudoku.util])
   (:require [clojure.set :as set]
@@ -166,8 +166,7 @@
 ;; rule 3
 ;; if there is two cells whose candidates has just two number and same
 ;; eachother, neigbor cells can't have those number.
-
-(defn find-same 
+(defn find-same-n
   ([board pos neigbor-func] (find-same board pos neigbor-func 2))
   ([board pos neigbor-func cnt]
      (let [ps (->> (neigbor-func pos)
@@ -176,12 +175,41 @@
        (loop [pairs (combo/combinations ps cnt)]
          (if (empty? pairs)
            nil
-           (if (= (get-val board (first (first pairs)))
-                  (get-val board (second (first pairs))))
+           (if (apply = (map (partial get-val board) (first pairs)))
              (first pairs)
              (recur (next pairs))))))))
 
+(defn same-n-cell
+  "Check every groups if it is only one in the neibor."
+  [board]
+  (loop [posfn-key-list [[row-pos-list (map #(vector 0 %) (range 9))]
+                         [col-pos-list (map #(vector % 0) (range 9))]
+                         [box-pos-list [[0 0] [3 0] [6 0]
+                                        [0 3] [3 3] [6 3]
+                                        [0 6] [3 6] [6 6]]]]
+         bd-lvl-1 board]
+    (if (empty? posfn-key-list)
+      bd-lvl-1
+      (recur (next posfn-key-list)
+             (let [[posfn key-pos-list] (first posfn-key-list)]
+               (loop [target-pos key-pos-list
+                      bd-lvl-2 bd-lvl-1]
+                 (if (empty? target-pos)
+                   bd-lvl-2
+                   (if-let [pairs (find-same-n bd-lvl-2 (first target-pos) posfn 2)]
+                     (recur (next target-pos)
+                            (reduce #(remove-num %1 %2
+                                                 (remove (set pairs)
+                                                         (posfn (first pairs))))
+                                    bd-lvl-2
+                                    (get-val bd-lvl-2 (first pairs))))
+                     (recur (next target-pos)
+                            bd-lvl-2)))))))))
 
-
-
+(defn apply-rule-3
+  "rule 3
+   if two cells have same two and only two candidate number,
+   those number shouldn't appear other cells in the group."
+  [board]
+)
 
