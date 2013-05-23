@@ -24,13 +24,6 @@
 (defn set-val [board pos value]
   (assoc board pos value))
 
-;; (defn take-away [board pos num]
-;;   (let [new-val (disj (get-val board pos) num)]
-;;     (set-val board pos
-;;              (if (= (count new-val) 1)
-;;                (first new-val)
-;;                new-val))))
-
 (defn take-away [board pos num]
   (update-in board [pos] disj num))
 
