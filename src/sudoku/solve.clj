@@ -24,8 +24,15 @@
 (defn set-val [board pos value]
   (assoc board pos value))
 
+;; (defn take-away [board pos num]
+;;   (let [new-val (disj (get-val board pos) num)]
+;;     (set-val board pos
+;;              (if (= (count new-val) 1)
+;;                (first new-val)
+;;                new-val))))
+
 (defn take-away [board pos num]
-  (set-val board pos (disj (get-val board pos) num)))
+  (update-in board [pos] disj num))
 
 ;; positions
 (defn row-pos-list
@@ -94,13 +101,13 @@
                       num)))]
     (reduce #(set-val %1 %2 (updater %2)) board (non-fixed-pos board))))
 
+
 ;; remove num from candidate
 (defn remove-num [board num pos-list]
-  (reduce (fn [b p] (if (set? (get-val b p))
-                     (take-away b p num)
-                     b))
+  (reduce (take-away %1 %2 num)
           board
-          pos-list))
+          (non-fixed-pos pos-list)))
+
 
 ;;
 ;; rule 1
@@ -109,7 +116,6 @@
    set the number as value of the posision and remove the number
    from related cells"
   [board pos]
-  
   (let [val-at-pos (first (get-val board pos))]
     (remove-num (set-val board pos val-at-pos)
                 val-at-pos
