@@ -93,7 +93,7 @@
 
 ;; remove num from candidate
 (defn remove-num [board num pos-list]
-  (reduce (take-away %1 %2 num)
+  (reduce #(take-away %1 %2 num)
           board
-          (non-fixed-pos pos-list)))
+          (non-fixed-pos board pos-list)))
 
