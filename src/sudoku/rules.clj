@@ -3,7 +3,7 @@
   (:require [clojure.set :as set]
             [clojure.math.combinatorics :as combo]))
 
-;;
+;;---------------------------------------------------------
 ;; rule 1
 (defn fix-the-number
   "receives posision whose candidates includes only one number.
@@ -25,9 +25,9 @@
       board
       (recur (reduce fix-the-number board fixing-pos)))))
 
-;;
-;; rule 2
 
+;;---------------------------------------------------------
+;; rule 2
 (defn not-in-neigbor 
   "return the number which is not in neigbors.
    return false if not found. "
@@ -62,12 +62,11 @@
           (= board next-board) board
           :t (recur next-board))))
 
-;;
+
+;;---------------------------------------------------------
 ;; rule 3
-;; if there is two cells whose candidates has just two number and same
-;; eachother, neigbor cells can't have those number.
 (defn find-same-n
-  ([board pos neigbor-func] (find-same board pos neigbor-func 2))
+  ([board pos neigbor-func] (find-same-n board pos neigbor-func 2))
   ([board pos neigbor-func cnt]
      (let [ps (->> (neigbor-func pos)
                    (non-fixed-pos board ,,)
@@ -113,6 +112,11 @@
   [board]
   (->> (iterate same-n-cell board)
        (partition 2 1 ,,)
-       (drop-while #(not= %1 %2) ,,)
+       (drop-while #(apply not= %) ,,)
        ((comp first first) ,,)))
 
+
+
+;;---------------------------------------------------------
+;; provide rules
+(def rule-list [apply-rule-1 apply-rule-2 apply-rule-3])
