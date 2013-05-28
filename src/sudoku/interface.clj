@@ -22,16 +22,13 @@
 
 
 
-(defn print-board [data]
-  (for [y (range 9)]
-        (for [x (range 9)]
-          (get data [x y]))))
 
 (defn print-board [data]
-  (clojure.pprint/pprint
-   (for [y (range 9)]
-        (for [x (range 9)]
-          (let [d (get data [x y])]
-            (if (set? d)
-              \_
-              d))))))
+  (dorun (for [y (range 9)]
+           (dorun (doseq [x (range 9)]
+                        (let [d (get data [x y])]
+                          (if (set? d)
+                            (print "_ ") 
+                            (printf "%-2s" d))))
+                  (newline)))))
+
