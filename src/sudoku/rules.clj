@@ -118,5 +118,11 @@
 
 
 ;;---------------------------------------------------------
-;; provide rules
+;; apply all rules
 (def rule-list [apply-rule-1 apply-rule-2 apply-rule-3])
+
+(defn apply-rules [board]
+  (let [new-board (reduce (fn [bd rule] (rule bd)) board rule-list)]
+    (if (= board new-board)
+      board
+      (recur new-board))))
