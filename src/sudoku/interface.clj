@@ -1,6 +1,4 @@
-(ns sudoku.interface
-  (:use [clojure.pprint]))
-
+(ns sudoku.interface)
 
 (defn read-data [s]
   (->> s
