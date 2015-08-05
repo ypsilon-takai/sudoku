@@ -1,6 +1,6 @@
 (ns sudoku.rules
-  (:use [sudoku.util])
-  (:require [clojure.set :as set]
+  (:require [sudoku.util :as util]
+            [clojure.set :as set]
             [clojure.math.combinatorics :as combo]))
 
 ;;---------------------------------------------------------
@@ -10,17 +10,18 @@
    set the number as value of the posision and remove the number
    from related cells"
   [board pos]
-  (let [val-at-pos (first (get-val board pos))]
-    (remove-num (set-val board pos val-at-pos)
+  (let [val-at-pos (first (util/get-val board pos))]
+    (util/remove-num (util/set-val board pos val-at-pos :rule1-tgt)
                 val-at-pos
-                (neibor-pos-list pos ))))
+                (util/neibor-pos-list pos)
+                :rule1-delete)))
 
 (defn apply-rule-1 
   "rule 1
      if there is only one possible number, place it."
   [board]
-  (let [fixing-pos (->> (non-fixed-pos board)
-                        (filter #(= (count (get-val board %)) 1) ,,))]
+  (let [fixing-pos (->> (util/non-fixed-pos board)
+                        (filter #(= (count (util/get-val board %)) 1) ,,))]
     (if (empty? fixing-pos)
       board
       (recur (reduce fix-the-number board fixing-pos)))))
