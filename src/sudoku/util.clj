@@ -1,11 +1,17 @@
 (ns sudoku.util
   (:require [clojure.set :as set]))
 
+(defn create-board
+  "Create new board with initial state."
+  [init]
+  {:board init
+   :history []})
 
-(defn solved? [board]
+
+(defn solved? [{board :board}]
   (not-any? coll? (vals board)))
 
-(defn status [board]
+(defn status [{board :board}]
   (let [still-as-candidate (filter set? (vals board))]
     (if (empty? still-as-candidate)
       :solved
@@ -14,14 +20,29 @@
         :notyet))))
 
 ;; utils
-(defn get-val [board pos]
+(defn get-val [{board :board} pos]
   (get board pos))
 
-(defn set-val [board pos value]
-  (assoc board pos value))
+(defn set-board-val [raw-board pos value]
+  (assoc raw-board pos value))
 
-(defn take-away [board pos num]
-  (update-in board [pos] disj ,, num))
+(defn set-val
+  ([board pos value]
+   (set-val board pos value nil))
+  ([board pos value rule]
+   {:board (set-board-val (:board board) pos value)
+    :history (conj (:history board)
+                   {:board (:board board)
+                    :rule rule})}))
+
+(defn take-away
+  ([board pos num]
+   (take-away board pos num nil))
+  ([board pos num rule]
+   {:board (update-in (:board board) [pos] disj ,, num)
+    :history (conj (:history board)
+                   {:board (:board board)
+                    :rule rule})}))
 
 ;; positions
 (defn row-pos-list
@@ -62,13 +83,13 @@
 
 ;; filter
 (defn non-fixed-pos
-  ([board] (non-fixed-pos board (keys board)))
+  ([board] (non-fixed-pos board (keys (:board board))))
   ([board pos-list]
      (->> pos-list
           (filter #(set? (get-val board %)) ,,))))
 
 (defn fixed-pos
-  ([board] (fixed-pos board (keys board)))
+  ([board] (fixed-pos board (keys (:board board))))
   ([board pos-list]
      (->> pos-list
           (filter #(number? (get-val board %)) ,,))))
@@ -82,18 +103,30 @@
        (set ,,)
        (set/difference (set (range 1 10)) ,,)))
 
-(defn update-candidate [board]
-  (let [updater (fn [pos]
-                  (let [num (get-val board pos)]
-                    (if (set? num) 
-                      (candidates pos board)
-                      num)))]
-    (reduce #(set-val %1 %2 (updater %2)) board (non-fixed-pos board))))
+(defn update-candidate
+  ([board]
+   (update-candidate board nil))
+  ([board rule]
+   (let [updater (fn [pos]
+                   (let [num (get-val board pos)]
+                     (if (set? num) 
+                       (candidates pos board)
+                       num)))
+         new-board (reduce #(set-board-val %1 %2 (updater %2))
+                           (:board board)
+                           (non-fixed-pos board))]
+     {:board new-board
+      :history (conj (:history board)
+                     {:board (:board board)
+                      :rule rule})})))
 
 
-;; remove num from candidate
-(defn remove-num [board num pos-list]
-  (reduce #(take-away %1 %2 num)
-          board
-          (non-fixed-pos board pos-list)))
+;; remove num from candidates
+(defn remove-num
+  ([board num pos-list]
+   (remove-num board num pos-list nil))
+  ([board num pos-list rule]
+   (reduce #(take-away %1 %2 num rule)
+           board
+           (non-fixed-pos board pos-list))))
 
