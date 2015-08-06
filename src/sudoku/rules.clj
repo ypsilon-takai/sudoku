@@ -12,9 +12,9 @@
   [board pos]
   (let [val-at-pos (first (util/get-val board pos))]
     (util/remove-num (util/set-val board pos val-at-pos :rule1-tgt)
-                val-at-pos
-                (util/neibor-pos-list pos)
-                :rule1-delete)))
+                     val-at-pos
+                     (util/neibor-pos-list pos)
+                     :rule1-delete)))
 
 (defn apply-rule-1 
   "rule 1
@@ -30,26 +30,27 @@
 ;;---------------------------------------------------------
 ;; rule 2
 (defn not-in-neigbor 
-  "return the number which is not in neigbors.
-   return false if not found. "
+  "Return the number which is not in neigbors.
+   Return false if none of it is found. "
   [board pos neigbor-func]
   (->> (neigbor-func pos false)
-       (map #(get-val board %) ,,)
+       (map #(util/get-val board %) ,,)
        (filter set? ,,)
        (reduce clojure.set/union ,,)
-       (clojure.set/difference (get-val board pos) ,,)
+       (clojure.set/difference (util/get-val board pos) ,,)
        (#(if (empty? %) false (first %)) ,,)))
 
 (defn check-only-one
-  "Check every candidates of the posision if it is only one in the neibor."
+  "Check every candidates of the posision whether it is only one in the neibor or not."
   [board pos]
-  (loop [pos-fn-list [row-pos-list col-pos-list box-pos-list]]
+  (loop [pos-fn-list [util/row-pos-list util/col-pos-list util/box-pos-list]]
     (if (empty? pos-fn-list)
       board
       (if-let [only-one-val (not-in-neigbor board pos (first pos-fn-list))]
-        (remove-num (set-val board pos only-one-val)
-                    only-one-val
-                    (neibor-pos-list pos))
+        (util/remove-num (util/set-val board pos only-one-val :rule2-tgt)
+                         only-one-val
+                         (util/neibor-pos-list pos)
+                         :rule2-delete)
         (recur (next pos-fn-list))))))
 
 (defn apply-rule-2
@@ -57,10 +58,10 @@
    if there is only one cell which specific number is in its candidates, 
    the cell's number is it."
   [board]
-  (let [target-pos (non-fixed-pos board)
+  (let [target-pos (util/non-fixed-pos board)
         next-board (reduce check-only-one board target-pos)]
     (cond (empty? target-pos) board
-          (= board next-board) board
+          (= (:board  board) (:board next-board)) board
           :t (recur next-board))))
 
 
