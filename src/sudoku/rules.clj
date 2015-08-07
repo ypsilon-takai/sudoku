@@ -115,7 +115,7 @@
   [board]
   (->> (iterate same-n-cell board)
        (partition 2 1 ,,)
-       (drop-while #(apply not= %) ,,)
+       (drop-while #(apply not= (map :board %)) ,,)
        ((comp first first) ,,)))
 
 
@@ -126,6 +126,6 @@
 
 (defn apply-rules [board]
   (let [new-board (reduce (fn [bd rule] (rule bd)) board rule-list)]
-    (if (= board new-board)
+    (if (= (:board  board) (:board  new-board))
       board
       (recur new-board))))
