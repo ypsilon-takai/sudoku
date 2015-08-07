@@ -71,21 +71,21 @@
   ([board pos neigbor-func] (find-same-n board pos neigbor-func 2))
   ([board pos neigbor-func cnt]
      (let [ps (->> (neigbor-func pos)
-                   (non-fixed-pos board ,,)
-                   (filter #(= cnt (count (get-val board %))) ,,))]
+                   (util/non-fixed-pos board ,,)
+                   (filter #(= cnt (count (util/get-val board %))) ,,))]
        (loop [pairs (combo/combinations ps cnt)]
          (if (empty? pairs)
            nil
-           (if (apply = (map (partial get-val board) (first pairs)))
+           (if (apply = (map (partial util/get-val board) (first pairs)))
              (first pairs)
              (recur (next pairs))))))))
 
 (defn same-n-cell
   "Check every groups if it is only one in the neibor."
   [board]
-  (loop [posfn-key-list [[row-pos-list (map #(vector 0 %) (range 9))]
-                         [col-pos-list (map #(vector % 0) (range 9))]
-                         [box-pos-list [[0 0] [3 0] [6 0]
+  (loop [posfn-key-list [[util/row-pos-list (map #(vector 0 %) (range 9))]
+                         [util/col-pos-list (map #(vector % 0) (range 9))]
+                         [util/box-pos-list [[0 0] [3 0] [6 0]
                                         [0 3] [3 3] [6 3]
                                         [0 6] [3 6] [6 6]]]]
          bd-lvl-1 board]
@@ -99,11 +99,12 @@
                    bd-lvl-2
                    (if-let [pairs (find-same-n bd-lvl-2 (first target-pos) posfn 2)]
                      (recur (next target-pos)
-                            (reduce #(remove-num %1 %2
-                                                 (remove (set pairs)
-                                                         (posfn (first pairs))))
+                            (reduce #(util/remove-num %1 %2
+                                                      (remove (set pairs)
+                                                              (posfn (first pairs)))
+                                                      :rule3)
                                     bd-lvl-2
-                                    (get-val bd-lvl-2 (first pairs))))
+                                    (util/get-val bd-lvl-2 (first pairs))))
                      (recur (next target-pos)
                             bd-lvl-2)))))))))
 
