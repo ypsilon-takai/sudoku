@@ -19,5 +19,6 @@
                 (if (seq number-list)
                   (or (backtrack (util/set-val new-board
                                                tgt-pos
-                                               (hash-set (first number-list) )))
+                                               (hash-set (first number-list))
+                                               :backtrack))
                       (recur (next number-list)))))))))
